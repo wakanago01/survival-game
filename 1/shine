@@ -1,0 +1,17 @@
+| シーン名       | 内容          |
+| ---------- | ----------- |
+
+| title      | タイトル画面      |
+| saveSelect | セーブデータ選択    |
+| planet     | 主人公の惑星（ホーム） |
+| farm       | 農業          |
+| mining     | 採掘          |
+| fishing    | 釣り          |
+| shop       | ショップ        |
+| craft      | クラフト        |
+| battle     | 地球人基地       |
+| house      | 家（睡眠）       |
+| rocket     | ロケット組み立て    |
+| ending     | エンディング      |
+| gameOver   | ゲームオーバー     |
+

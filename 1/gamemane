@@ -1,0 +1,38 @@
+② gameManager.js の役割
+
+ゲーム全体を管理するメインのファイルです。
+
+ゲーム開始
+    タイトル画面の表示
+    セーブデータの読み込み
+    惑星マップの開始
+
+シーン管理
+    title
+    saveSelect
+    planet
+    ending
+    gameOver
+
+時間管理
+    昼・夜
+    ゲーム内時間
+    日数
+
+セーブロード
+    セーブ
+    ロード
+    (オートセーブ)
+
+今後追加されるものを接続
+    Player
+    Inventory
+    Farm
+    Mining
+    Fishing
+    Battle
+    Craft
+    Rocket
+    Shop
+    など
+    

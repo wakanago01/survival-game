@@ -1,0 +1,7 @@
+① main.js の役割 = ゲームを始めるスイッチの役割
+
+main.js はゲームを起動するファイル
+
+ページが読み込まれたらゲームを開始する
+GameManager を生成する
+GameManager.start() を呼び出す
