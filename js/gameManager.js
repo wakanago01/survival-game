@@ -7,6 +7,7 @@ import EndingScene from "./scenes/EndingScene.js";
 export default class GameManager {
 
     constructor() {
+
         this.gameState = {
             hp: 100,
             maxHp: 100,
@@ -21,10 +22,22 @@ export default class GameManager {
 
         this.config = {
             type: Phaser.AUTO,
-            width: 1280,
-            height: 720,
+
+            // ゲーム内部の基準サイズ
+            width: 1920,
+            height: 1080,
+
             parent: "game-container",
             backgroundColor: "#000000",
+
+            // PC画面に合わせて拡大・縮小
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 1920,
+                height: 1080
+            },
+
             scene: [
                 TitleScene,
                 SaveSelectScene,
