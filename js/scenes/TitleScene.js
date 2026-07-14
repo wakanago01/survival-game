@@ -8,7 +8,7 @@ export default class TitleScene extends Phaser.Scene {
         // 背景画像
         this.load.image(
             "titleBackground",
-            "assets/images/titles/kari.png"
+            "assets/images/titles/karititle.png"
         );
 
         // NEW GAME 通常

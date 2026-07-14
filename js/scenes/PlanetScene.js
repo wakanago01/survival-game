@@ -1,3 +1,6 @@
+import WorldMap from "../world/map.js";
+import CollisionManager from "../world/collision.js";
+
 export default class PlanetScene extends Phaser.Scene {
 
     constructor() {
@@ -6,18 +9,16 @@ export default class PlanetScene extends Phaser.Scene {
 
     create() {
 
-        this.cameras.main.setBackgroundColor("#2d7d46");
+        // ① マップを生成
+        this.worldMap = new WorldMap(this);
 
-        this.add.text(
-            420,
-            40,
-            "Planet Scene",
-            {
-                fontSize: "40px",
-                color: "#ffffff"
-            }
-        );
+        // ② 当たり判定システムを生成
+        this.collision = new CollisionManager(this.worldMap);
 
+        // ③ スポーン地点を取得
+        const spawn = this.worldMap.getSpawnPoint();
+
+        console.log("マップ生成完了");
+        console.log("スポーン地点:", spawn);
     }
-
 }
