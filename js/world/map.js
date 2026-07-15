@@ -117,10 +117,20 @@ export default class WorldMap {
         /** グラフィックスオブジェクト（Phaser.GameObjects.Graphics） */
         this.graphics = null;
 
+        /** 最後に描画したタイル範囲 */
+        this._renderedBounds = null;
+
+        /** オブジェクト変化などで再描画が必要かどうか */
+        this._needsRedraw = true;
+
+        /** カメラ端で描画欠けを防ぐための余白タイル数 */
+        this._renderPaddingTiles = 2;
+
         // マップを生成・描画
         this._generateMap();
-        this._drawMap();
         this._setupCamera();
+        this._drawMap();
+        this._registerRenderUpdater();
     }
 
     // ----------------------------------------------------------
@@ -342,7 +352,7 @@ export default class WorldMap {
     // ----------------------------------------------------------
 
     /** マップをGraphicsで描画（プレースホルダー） */
-    _drawMap() {
+    _drawMap(bounds = this._getVisibleTileBounds()) {
         const scene = this.scene;
 
         // Graphicsオブジェクトをシーンに追加
@@ -351,13 +361,18 @@ export default class WorldMap {
         }
         this.graphics.clear();
 
+        const minX = bounds.startCol * TILE_SIZE;
+        const minY = bounds.startRow * TILE_SIZE;
+        const width = (bounds.endCol - bounds.startCol + 1) * TILE_SIZE;
+        const height = (bounds.endRow - bounds.startRow + 1) * TILE_SIZE;
+
         // Layer0: 宇宙背景（グラデーション風の単色）
         this.graphics.fillStyle(0x0a0a1a, 1);
-        this.graphics.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+        this.graphics.fillRect(minX, minY, width, height);
 
         // Layer1: 地形タイルを描画
-        for (let r = 0; r < MAP_ROWS; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
+        for (let r = bounds.startRow; r <= bounds.endRow; r++) {
+            for (let c = bounds.startCol; c <= bounds.endCol; c++) {
                 const tileId = this.layer1[r][c];
                 if (tileId === TILE.EMPTY) continue;
                 const color = TILE_COLORS[tileId] ?? "#ff00ff";
@@ -373,24 +388,29 @@ export default class WorldMap {
         // Layer1: グリッドライン（デバッグ補助・薄く）
         // ※ 画像タイル導入後は削除してよい
         this.graphics.lineStyle(0.5, 0x333344, 0.15);
-        for (let r = 0; r <= MAP_ROWS; r++) {
-            this.graphics.lineBetween(0, r * TILE_SIZE, MAP_WIDTH, r * TILE_SIZE);
+        for (let r = bounds.startRow; r <= bounds.endRow + 1; r++) {
+            const y = r * TILE_SIZE;
+            this.graphics.lineBetween(minX, y, minX + width, y);
         }
-        for (let c = 0; c <= MAP_COLS; c++) {
-            this.graphics.lineBetween(c * TILE_SIZE, 0, c * TILE_SIZE, MAP_HEIGHT);
+        for (let c = bounds.startCol; c <= bounds.endCol + 1; c++) {
+            const x = c * TILE_SIZE;
+            this.graphics.lineBetween(x, minY, x, minY + height);
         }
 
         // Layer2: オブジェクト描画
-        this._drawObjects();
+        this._drawObjects(bounds);
 
         // Layer4: 前景（崖の上端などオーバーレイ）
-        this._drawForeground();
+        this._drawForeground(bounds);
+
+        this._renderedBounds = bounds;
+        this._needsRedraw = false;
     }
 
     /** Layer2 オブジェクトをGraphicsで描画 */
-    _drawObjects() {
-        for (let r = 0; r < MAP_ROWS; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
+    _drawObjects(bounds) {
+        for (let r = bounds.startRow; r <= bounds.endRow; r++) {
+            for (let c = bounds.startCol; c <= bounds.endCol; c++) {
                 const objId = this.layer2[r][c];
                 if (objId === OBJ.NONE) continue;
 
@@ -471,10 +491,11 @@ export default class WorldMap {
     }
 
     /** Layer4 前景（崖の上端に帯を描いて立体感） */
-    _drawForeground() {
+    _drawForeground(bounds) {
         this.graphics.lineStyle(2, 0x333344, 0.4);
-        for (let r = 1; r < MAP_ROWS; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
+        const startRow = Math.max(1, bounds.startRow);
+        for (let r = startRow; r <= bounds.endRow; r++) {
+            for (let c = bounds.startCol; c <= bounds.endCol; c++) {
                 if (this.layer1[r][c] === TILE.CLIFF &&
                     this.layer1[r - 1][c] !== TILE.CLIFF) {
                     // 崖上端に影線
@@ -485,6 +506,53 @@ export default class WorldMap {
                 }
             }
         }
+    }
+
+    /** カメラ移動・状態変化に応じて表示範囲だけを再描画する */
+    _registerRenderUpdater() {
+        this.scene.events.on("update", this._updateVisibleRender, this);
+        this.scene.events.once("shutdown", () => {
+            this.scene.events.off("update", this._updateVisibleRender, this);
+        });
+        this.scene.events.once("destroy", () => {
+            this.scene.events.off("update", this._updateVisibleRender, this);
+        });
+    }
+
+    /** 表示中のタイル範囲が変わった時だけGraphicsを更新する */
+    _updateVisibleRender() {
+        const bounds = this._getVisibleTileBounds();
+        if (!this._needsRedraw && this._sameBounds(bounds, this._renderedBounds)) {
+            return;
+        }
+        this._drawMap(bounds);
+    }
+
+    /** 現在のカメラに映るタイル範囲を返す */
+    _getVisibleTileBounds() {
+        const camera = this.scene.cameras.main;
+        const padding = this._renderPaddingTiles;
+        const startCol = Math.max(0, Math.floor(camera.scrollX / TILE_SIZE) - padding);
+        const startRow = Math.max(0, Math.floor(camera.scrollY / TILE_SIZE) - padding);
+        const endCol = Math.min(
+            MAP_COLS - 1,
+            Math.ceil((camera.scrollX + camera.width) / TILE_SIZE) + padding
+        );
+        const endRow = Math.min(
+            MAP_ROWS - 1,
+            Math.ceil((camera.scrollY + camera.height) / TILE_SIZE) + padding
+        );
+
+        return { startRow, endRow, startCol, endCol };
+    }
+
+    /** 2つの描画範囲が同じかどうか */
+    _sameBounds(a, b) {
+        return !!a && !!b &&
+            a.startRow === b.startRow &&
+            a.endRow === b.endRow &&
+            a.startCol === b.startCol &&
+            a.endCol === b.endCol;
     }
 
     // ----------------------------------------------------------
@@ -565,9 +633,8 @@ export default class WorldMap {
      * @param {number} col
      */
     _redrawTile(row, col) {
-        // ※ Graphics の差分更新は重いため、現状は全体再描画。
-        //    タイル画像導入後は RenderTexture 等で最適化すること。
-        this._drawMap();
+        // Graphicsは表示中の範囲だけを次のupdateでまとめて再描画する。
+        this._needsRedraw = true;
     }
 
     // ----------------------------------------------------------
