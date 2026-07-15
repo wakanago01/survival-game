@@ -114,9 +114,10 @@ export default class WorldMap {
         /** 水域タイルセット（釣り・侵入不可） */
         this.waterTiles = new Set();
 
-        /** グラフィックスオブジェクト（Phaser.GameObjects.Graphics） */
+        /** タイル描画用グラフィックス（ビューポート範囲のみ毎フレーム更新） */
         this.graphics = null;
 
+<<<<<<< HEAD
         /** 最後に描画したタイル範囲 */
         this._renderedBounds = null;
 
@@ -128,6 +129,21 @@ export default class WorldMap {
 
         // マップを生成・描画
         this._generateMap();
+=======
+        /** 静的背景用グラフィックス（宇宙背景を一度だけ全体描画） */
+        this.bgGraphics = null;
+
+        /** カメラ位置キャッシュ（差分描画最適化: 動いた時だけ再描画） */
+        this._lastCamScrollX = -9999;
+        this._lastCamScrollY = -9999;
+
+        /** タイル再描画フラグ（オブジェクト変化時に true にセット） */
+        this._dirty = true;
+
+        // マップデータ生成・グラフィックス初期化（描画はrenderViewport()で行う）
+        this._generateMap();
+        this._initGraphics();
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
         this._setupCamera();
         this._drawMap();
         this._registerRenderUpdater();
@@ -348,19 +364,72 @@ export default class WorldMap {
     }
 
     // ----------------------------------------------------------
-    // 描画
+    // グラフィックス初期化
     // ----------------------------------------------------------
 
+<<<<<<< HEAD
     /** マップをGraphicsで描画（プレースホルダー） */
     _drawMap(bounds = this._getVisibleTileBounds()) {
+=======
+    /**
+     * グラフィックスオブジェクトを初期化し、静的な宇宙背景を一度だけ描画する。
+     * コンストラクタから呼ばれる（タイル描画はしない）。
+     */
+    _initGraphics() {
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
         const scene = this.scene;
 
-        // Graphicsオブジェクトをシーンに追加
+        // 背景用グラフィックス（単一矩形なので高速・一度だけ描画）
+        if (!this.bgGraphics) {
+            this.bgGraphics = scene.add.graphics();
+        }
+        this.bgGraphics.fillStyle(0x0a0a1a, 1);
+        this.bgGraphics.fillRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+
+        // タイル描画用グラフィックス（毎フレーム可視範囲のみ更新）
         if (!this.graphics) {
             this.graphics = scene.add.graphics();
         }
+    }
+
+    // ----------------------------------------------------------
+    // 描画
+    // ----------------------------------------------------------
+
+    /**
+     * カメラのビューポート内に見えているタイルのみを描画する。
+     * シーンの update() から毎フレーム呼ぶこと。
+     * カメラ位置・dirty フラグが変化していなければ描画をスキップする。
+     */
+    renderViewport() {
+        const cam = this.scene.cameras.main;
+        const camX = Math.floor(cam.scrollX);
+        const camY = Math.floor(cam.scrollY);
+
+        // カメラが動いておらず dirty でもなければスキップ（パフォーマンス最適化）
+        if (!this._dirty &&
+            camX === this._lastCamScrollX &&
+            camY === this._lastCamScrollY) {
+            return;
+        }
+        this._lastCamScrollX = camX;
+        this._lastCamScrollY = camY;
+        this._dirty = false;
+
+        const zoom = cam.zoom || 1;
+        const viewW = cam.width / zoom;
+        const viewH = cam.height / zoom;
+
+        // 可視タイル範囲を計算（PAD タイル分だけ余裕を持つ）
+        const PAD = 2;
+        const startCol = Math.max(0,           Math.floor(camX / TILE_SIZE) - PAD);
+        const startRow = Math.max(0,           Math.floor(camY / TILE_SIZE) - PAD);
+        const endCol   = Math.min(MAP_COLS - 1, Math.ceil((camX + viewW) / TILE_SIZE) + PAD);
+        const endRow   = Math.min(MAP_ROWS - 1, Math.ceil((camY + viewH) / TILE_SIZE) + PAD);
+
         this.graphics.clear();
 
+<<<<<<< HEAD
         const minX = bounds.startCol * TILE_SIZE;
         const minY = bounds.startRow * TILE_SIZE;
         const width = (bounds.endCol - bounds.startCol + 1) * TILE_SIZE;
@@ -373,6 +442,11 @@ export default class WorldMap {
         // Layer1: 地形タイルを描画
         for (let r = bounds.startRow; r <= bounds.endRow; r++) {
             for (let c = bounds.startCol; c <= bounds.endCol; c++) {
+=======
+        // Layer1: 地形タイル（可視範囲のみ）
+        for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
                 const tileId = this.layer1[r][c];
                 if (tileId === TILE.EMPTY) continue;
                 const color = TILE_COLORS[tileId] ?? "#ff00ff";
@@ -385,9 +459,10 @@ export default class WorldMap {
             }
         }
 
-        // Layer1: グリッドライン（デバッグ補助・薄く）
+        // グリッドライン（可視範囲のみ・デバッグ補助）
         // ※ 画像タイル導入後は削除してよい
         this.graphics.lineStyle(0.5, 0x333344, 0.15);
+<<<<<<< HEAD
         for (let r = bounds.startRow; r <= bounds.endRow + 1; r++) {
             const y = r * TILE_SIZE;
             this.graphics.lineBetween(minX, y, minX + width, y);
@@ -411,6 +486,46 @@ export default class WorldMap {
     _drawObjects(bounds) {
         for (let r = bounds.startRow; r <= bounds.endRow; r++) {
             for (let c = bounds.startCol; c <= bounds.endCol; c++) {
+=======
+        for (let r = startRow; r <= endRow + 1; r++) {
+            this.graphics.lineBetween(
+                startCol * TILE_SIZE, r * TILE_SIZE,
+                (endCol + 1) * TILE_SIZE, r * TILE_SIZE
+            );
+        }
+        for (let c = startCol; c <= endCol + 1; c++) {
+            this.graphics.lineBetween(
+                c * TILE_SIZE, startRow * TILE_SIZE,
+                c * TILE_SIZE, (endRow + 1) * TILE_SIZE
+            );
+        }
+
+        // Layer2: オブジェクト（可視範囲のみ）
+        this._drawObjects(startRow, startCol, endRow, endCol);
+
+        // Layer4: 前景（可視範囲のみ）
+        this._drawForeground(startRow, startCol, endRow, endCol);
+    }
+
+    /**
+     * 後方互換性のため残す。内部では renderViewport() にリダイレクトする。
+     * ※ 外部から直接呼ぶ場合は renderViewport() を使うこと。
+     */
+    _drawMap() {
+        this.renderViewport();
+    }
+
+    /**
+     * Layer2 オブジェクトをGraphicsで描画（指定タイル範囲のみ）
+     * @param {number} startRow
+     * @param {number} startCol
+     * @param {number} endRow
+     * @param {number} endCol
+     */
+    _drawObjects(startRow = 0, startCol = 0, endRow = MAP_ROWS - 1, endCol = MAP_COLS - 1) {
+        for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
                 const objId = this.layer2[r][c];
                 if (objId === OBJ.NONE) continue;
 
@@ -490,12 +605,28 @@ export default class WorldMap {
         }
     }
 
+<<<<<<< HEAD
     /** Layer4 前景（崖の上端に帯を描いて立体感） */
     _drawForeground(bounds) {
         this.graphics.lineStyle(2, 0x333344, 0.4);
         const startRow = Math.max(1, bounds.startRow);
         for (let r = startRow; r <= bounds.endRow; r++) {
             for (let c = bounds.startCol; c <= bounds.endCol; c++) {
+=======
+    /**
+     * Layer4 前景（崖の上端に帯を描いて立体感）
+     * 指定タイル範囲のみ処理する。
+     * @param {number} startRow
+     * @param {number} startCol
+     * @param {number} endRow
+     * @param {number} endCol
+     */
+    _drawForeground(startRow = 1, startCol = 0, endRow = MAP_ROWS - 1, endCol = MAP_COLS - 1) {
+        this.graphics.lineStyle(2, 0x333344, 0.4);
+        const rStart = Math.max(1, startRow); // row=0 は r-1 参照できないためスキップ
+        for (let r = rStart; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
                 if (this.layer1[r][c] === TILE.CLIFF &&
                     this.layer1[r - 1][c] !== TILE.CLIFF) {
                     // 崖上端に影線
@@ -633,8 +764,14 @@ export default class WorldMap {
      * @param {number} col
      */
     _redrawTile(row, col) {
+<<<<<<< HEAD
         // Graphicsは表示中の範囲だけを次のupdateでまとめて再描画する。
         this._needsRedraw = true;
+=======
+        // 全体再描画は非常に重いため、dirty フラグを立てるだけにする。
+        // 次フレームの renderViewport() 呼び出し時にビューポート範囲のみ再描画される。
+        this._dirty = true;
+>>>>>>> 3aa2360ece8eb25881e9ea733bf52b36a68ef31d
     }
 
     // ----------------------------------------------------------
