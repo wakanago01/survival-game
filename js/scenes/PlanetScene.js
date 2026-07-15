@@ -7,6 +7,10 @@ export default class PlanetScene extends Phaser.Scene {
         super("PlanetScene");
     }
 
+    preload() {
+        this.load.image("worldMapImage", "assets/images/world/map.png");
+    }
+
     create() {
 
         // ① マップを生成
