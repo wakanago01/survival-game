@@ -30,6 +30,13 @@ export default class GameManager {
             parent: "game-container",
             backgroundColor: "#000000",
 
+            physics: {
+                default: "arcade",
+                arcade: {
+                    debug: false
+                }
+            },
+
             // PC画面に合わせて拡大・縮小
             scale: {
                 mode: Phaser.Scale.FIT,
