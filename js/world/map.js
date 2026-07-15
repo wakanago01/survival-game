@@ -28,8 +28,8 @@ export const OBJ = Object.freeze({
     BASE: 9,
 });
 
-export const MAP_WIDTH = 1920;
-export const MAP_HEIGHT = 1080;
+export const MAP_WIDTH = 3840;
+export const MAP_HEIGHT = 2160;
 export const TILE_SIZE = 32;
 export const MAP_COLS = Math.ceil(MAP_WIDTH / TILE_SIZE);
 export const MAP_ROWS = Math.ceil(MAP_HEIGHT / TILE_SIZE);
@@ -62,7 +62,7 @@ export default class WorldMap {
 
         this.spawnPoint = {
             x: MAP_WIDTH / 2,
-            y: MAP_HEIGHT / 2 + TILE_SIZE,
+            y: MAP_HEIGHT / 2,
         };
 
         this.mapImage = null;
