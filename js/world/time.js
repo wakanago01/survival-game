@@ -30,7 +30,7 @@ import { GAME_SETTINGS } from "../data/settings.js";
 const DAY_DURATION_MS  = GAME_SETTINGS.time.dayDurationMs;
 
 /** 昼の割合（0.5 = 半分） */
-const DAY_RATIO        = 0.5;
+const DAY_RATIO        = GAME_SETTINGS.time.dayPhaseDurationMs / DAY_DURATION_MS;
 
 /** 昼の終了時刻（0〜1 正規化） */
 const NIGHT_START_NORM = DAY_RATIO; // 0.5 = 18:00
@@ -166,6 +166,33 @@ export default class TimeManager {
      */
     getNightFlag() {
         return this.isNight;
+    }
+
+    /**
+     * 現在の時間帯を返す。
+     * @returns {"day"|"night"}
+     */
+    getPhase() {
+        return this.isNight ? "night" : "day";
+    }
+
+    /**
+     * 現在の昼または夜の進行率を返す（0.0〜1.0）。
+     * @returns {number}
+     */
+    getPhaseProgress() {
+        if (this.isNight) {
+            return (this._normalizedTime - NIGHT_START_NORM) / (1.0 - NIGHT_START_NORM);
+        }
+        return this._normalizedTime / NIGHT_START_NORM;
+    }
+
+    /**
+     * 1日全体の進行率を返す（0.0〜1.0）。
+     * @returns {number}
+     */
+    getDayProgress() {
+        return this._normalizedTime;
     }
 
     /**

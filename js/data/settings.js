@@ -12,9 +12,18 @@ export const GAME_SETTINGS = Object.freeze({
 
     time: {
         dayDurationMs: 40 * 60 * 1000,
+        dayPhaseDurationMs: 20 * 60 * 1000,
+        nightPhaseDurationMs: 20 * 60 * 1000,
         nightStartMinutes: 18 * 60,
         morningStartMinutes: 6 * 60,
         minutesPerDay: 24 * 60,
+    },
+
+    map: {
+        dayKey: "worldMapDay",
+        nightKey: "worldMapNight",
+        dayPath: "assets/images/world/map.png",
+        nightPath: "assets/images/world/map.png",
     },
 
     save: {

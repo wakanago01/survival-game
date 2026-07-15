@@ -1,5 +1,8 @@
 import WorldMap from "../world/map.js";
 import CollisionManager from "../world/collision.js";
+import TimeManager from "../world/time.js";
+import TimeClock from "../ui/timeClock.js";
+import { GAME_SETTINGS } from "../data/settings.js";
 
 const TEMP_PLAYER_SPEED = 260;
 
@@ -10,7 +13,8 @@ export default class PlanetScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("worldMapImage", "assets/images/world/map.png");
+        this.load.image(GAME_SETTINGS.map.dayKey, GAME_SETTINGS.map.dayPath);
+        this.load.image(GAME_SETTINGS.map.nightKey, GAME_SETTINGS.map.nightPath);
     }
 
     create() {
@@ -21,7 +25,18 @@ export default class PlanetScene extends Phaser.Scene {
         // ② 当たり判定システムを生成
         this.collision = new CollisionManager(this.worldMap);
 
-        // ③ スポーン地点を取得
+        // ③ 時間管理と昼夜時計UIを生成
+        this.timeManager = new TimeManager(this, this.worldMap);
+        this.timeManager.onNightStart = () => {
+            this.worldMap.setTimeOfDay(true);
+        };
+        this.timeManager.onMorningStart = () => {
+            this.worldMap.setTimeOfDay(false);
+        };
+        this.worldMap.setTimeOfDay(this.timeManager.getNightFlag());
+        this.timeClock = new TimeClock(this, this.timeManager);
+
+        // ④ スポーン地点を取得
         const spawn = this.worldMap.getSpawnPoint();
 
         // ===== 仮キャラクター処理ここから（正式なplayer.js実装後に削除） =====
@@ -49,6 +64,9 @@ export default class PlanetScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        this.timeManager.update(delta);
+        this.timeClock.update();
+
         // ===== 仮キャラクター移動処理ここから（正式なmovement.js実装後に削除） =====
         if (!this.player?.body) return;
 

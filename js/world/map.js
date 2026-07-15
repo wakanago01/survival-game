@@ -6,6 +6,8 @@
  * 重くならないよう、毎フレームのタイル描画やGraphics再描画は行わない。
  */
 
+import { GAME_SETTINGS } from "../data/settings.js";
+
 export const TILE = Object.freeze({
     GRASS: 1,
     SOIL: 2,
@@ -33,8 +35,6 @@ export const MAP_HEIGHT = 2160;
 export const TILE_SIZE = 32;
 export const MAP_COLS = Math.ceil(MAP_WIDTH / TILE_SIZE);
 export const MAP_ROWS = Math.ceil(MAP_HEIGHT / TILE_SIZE);
-
-const MAP_IMAGE_KEY = "worldMapImage";
 
 export default class WorldMap {
 
@@ -93,7 +93,7 @@ export default class WorldMap {
     }
 
     _createMapImage() {
-        this.mapImage = this.scene.add.image(0, 0, MAP_IMAGE_KEY)
+        this.mapImage = this.scene.add.image(0, 0, GAME_SETTINGS.map.dayKey)
             .setOrigin(0, 0)
             .setDisplaySize(MAP_WIDTH, MAP_HEIGHT)
             .setDepth(0);
@@ -110,6 +110,14 @@ export default class WorldMap {
 
     renderViewport() {
         // map.png は静的画像なので、毎フレームの描画更新は不要。
+    }
+
+    setTimeOfDay(isNight) {
+        const textureKey = isNight ? GAME_SETTINGS.map.nightKey : GAME_SETTINGS.map.dayKey;
+        if (this.mapImage && this.mapImage.texture?.key !== textureKey) {
+            this.mapImage.setTexture(textureKey);
+            this.mapImage.setDisplaySize(MAP_WIDTH, MAP_HEIGHT);
+        }
     }
 
     removeObject(row, col, currentDay) {
