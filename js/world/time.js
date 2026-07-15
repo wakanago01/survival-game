@@ -20,18 +20,20 @@
  *   this.timeManager.onMorningStart = () => { ... };
  */
 
+import { GAME_SETTINGS } from "../data/settings.js";
+
 // ============================================================
 // 定数
 // ============================================================
 
 /** 1日のリアル時間（ミリ秒） 40分 */
-const DAY_DURATION_MS  = 40 * 60 * 1000;
+const DAY_DURATION_MS  = GAME_SETTINGS.time.dayDurationMs;
 
 /** 昼の割合（0.5 = 半分） */
 const DAY_RATIO        = 0.5;
 
 /** 昼の終了時刻（0〜1 正規化） */
-const NIGHT_START_NORM = DAY_RATIO; // 0.5
+const NIGHT_START_NORM = DAY_RATIO; // 0.5 = 18:00
 
 /** 夜の終了 = 1.0 → 翌朝0.0 */
 
@@ -189,6 +191,7 @@ export default class TimeManager {
         this._advanceDay();
 
         this._applyTimeEffects();
+        this._syncToGameState();
         if (wasNight && this.onMorningStart) this.onMorningStart();
         console.log(`[TimeManager] 睡眠 → 朝になりました (Day ${this._gameState().day})`);
     }
@@ -274,21 +277,24 @@ export default class TimeManager {
 
     /** gameState.time（分）→ 正規化値 */
     _minutesToNorm(minutes) {
-        // gameState.time は 480（8:00 AM 相当）スタート、1440分=24時間
-        // → 0.0 〜 1.0 に正規化（朝6時=0.0 として扱う）
-        const adjusted = ((minutes - 360) % 1440 + 1440) % 1440;
-        return adjusted / (DAY_DURATION_MS / 1000 / 60);
+        // gameState.time は 0〜1439分、内部時刻は朝6時を0.0として扱う
+        const minutesPerDay = GAME_SETTINGS.time.minutesPerDay;
+        const morning = GAME_SETTINGS.time.morningStartMinutes;
+        const adjusted = ((minutes - morning) % minutesPerDay + minutesPerDay) % minutesPerDay;
+        return adjusted / minutesPerDay;
     }
 
     /** 正規化値 → gameState.time（分） */
     _normToMinutes(norm) {
-        return Math.floor(norm * (DAY_DURATION_MS / 1000 / 60));
+        const minutesPerDay = GAME_SETTINGS.time.minutesPerDay;
+        const morning = GAME_SETTINGS.time.morningStartMinutes;
+        return Math.floor((norm * minutesPerDay + morning) % minutesPerDay);
     }
 
     /** window.gameManager.gameState への参照を返す */
     _gameState() {
         return window.gameManager ? window.gameManager.gameState : {
-            day: 1, time: 480, hp: 100, maxHp: 100,
+            day: 1, time: GAME_SETTINGS.time.morningStartMinutes, hp: 100, maxHp: 100,
         };
     }
 

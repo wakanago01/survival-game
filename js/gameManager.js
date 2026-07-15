@@ -3,22 +3,22 @@ import SaveSelectScene from "./scenes/SaveSelectScene.js";
 import PlanetScene from "./scenes/PlanetScene.js";
 import GameOverScene from "./scenes/GameOverScene.js";
 import EndingScene from "./scenes/EndingScene.js";
+import { GAME_SETTINGS, createInitialGameState } from "./data/settings.js";
+import SaveManager from "./systems/save.js";
+import EventManager from "./systems/event.js";
+import AudioManager from "./systems/audio.js";
 
 export default class GameManager {
 
     constructor() {
 
-        this.gameState = {
-            hp: 100,
-            maxHp: 100,
-            money: 0,
-            day: 1,
-            time: 480, 
-            rocketProgress: 0,
-            playTime: 0,
-            isPaused: false,
-            currentScene: "TitleScene"
-        };
+        this.gameState = createInitialGameState("TitleScene");
+        this.saveManager = new SaveManager();
+        this.eventManager = new EventManager({
+            gameManager: this,
+            saveManager: this.saveManager,
+        });
+        this.audioManager = new AudioManager();
 
         this.config = {
             type: Phaser.AUTO,
@@ -49,8 +49,8 @@ export default class GameManager {
     }
 
     start() {
-        this.game = new Phaser.Game(this.config);
         window.gameManager = this;
+        this.game = new Phaser.Game(this.config);
     }
 
     getGameState() {
@@ -58,31 +58,33 @@ export default class GameManager {
     }
 
     newGame() {
-        this.gameState = {
-            hp: 100,
-            maxHp: 100,
-            money: 0,
-            day: 1,
-            time: 480,
-            rocketProgress: 0,
-            playTime: 0,
-            currentScene: "PlanetScene",
-            isPaused: false
-        };
+        this.gameState = createInitialGameState("PlanetScene");
         console.log("ニューゲーム開始");
         this.changeScene("PlanetScene");
     }
 
-    continueGame() {
-        console.log("Continue");
+    continueGame(slot = GAME_SETTINGS.save.defaultSlot) {
+        if (this.loadGame(slot)) {
+            const sceneName = this.gameState.currentScene || "PlanetScene";
+            console.log(`スロット${slot}から再開`);
+            this.changeScene(sceneName);
+            return true;
+        }
+
+        console.log(`スロット${slot}にセーブデータがありません`);
+        return false;
     }
 
-    saveGame() {
-        console.log("ゲームを保存");
+    saveGame(slot = GAME_SETTINGS.save.defaultSlot) {
+        return this.saveManager.save(slot, this.gameState);
     }
 
-    loadGame() {
-        console.log("ゲームを読み込み");
+    loadGame(slot = GAME_SETTINGS.save.defaultSlot) {
+        const loadedState = this.saveManager.load(slot);
+        if (!loadedState) return false;
+
+        this.gameState = loadedState;
+        return true;
     }
 
     changeScene(sceneName) {

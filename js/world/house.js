@@ -116,15 +116,22 @@ export default class HouseManager {
 
             // --- フェードアウト完了後の処理 ---
 
-            // 1. HP全回復
-            this._recoverHP();
+            const eventManager = window.gameManager?.eventManager;
+            if (eventManager) {
+                eventManager.sleep({ timeManager: this.timeManager, save: true });
+            } else {
+                // 1. HP全回復
+                this._recoverHP();
 
-            // 2. 時間を翌朝にスキップ（time.js が日数も進める）
-            if (this.timeManager) {
-                this.timeManager.skipToMorning();
+                // 2. 時間を翌朝にスキップ（time.js が日数も進める）
+                if (this.timeManager) {
+                    this.timeManager.skipToMorning();
+                }
+
+                window.gameManager?.saveGame?.();
             }
 
-            // 3. セーブコールバック（外部で定義可能）
+            // 追加の就寝コールバック（外部で定義可能）
             if (this.onSleep) {
                 this.onSleep();
             }

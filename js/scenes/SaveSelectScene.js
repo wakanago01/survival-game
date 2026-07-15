@@ -23,8 +23,10 @@ export default class SaveSelectScene extends Phaser.Scene {
     update() {
 
         if (Phaser.Input.Keyboard.JustDown(this.enterKey)) {
-
-            this.scene.start("PlanetScene");
+            const loaded = window.gameManager?.continueGame(1);
+            if (!loaded) {
+                this.scene.start("TitleScene");
+            }
 
         }
 
