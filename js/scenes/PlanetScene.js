@@ -4,8 +4,6 @@ import TimeManager from "../world/time.js";
 import TimeClock from "../ui/timeClock.js";
 import { GAME_SETTINGS } from "../data/settings.js";
 
-const TEMP_PLAYER_SPEED = 260;
-
 export default class PlanetScene extends Phaser.Scene {
 
     constructor() {
@@ -16,6 +14,7 @@ export default class PlanetScene extends Phaser.Scene {
         this.load.image(GAME_SETTINGS.map.dayKey, GAME_SETTINGS.map.dayPath);
         this.load.image(GAME_SETTINGS.map.nightKey, GAME_SETTINGS.map.nightPath);
     }
+
 
     create() {
 
@@ -39,29 +38,10 @@ export default class PlanetScene extends Phaser.Scene {
         // ④ スポーン地点を取得
         const spawn = this.worldMap.getSpawnPoint();
 
-        // ===== 仮キャラクター処理ここから（正式なplayer.js実装後に削除） =====
-        this.player = this.add.rectangle(spawn.x, spawn.y, 36, 48, 0x66e0ff)
-            .setStrokeStyle(3, 0xffffff)
-            .setDepth(10);
-
-        this.physics.add.existing(this.player);
-        this.player.body.setCollideWorldBounds(true);
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.wasdKeys = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D,
-        });
-
-        this.cameras.main.setDeadzone(120, 80);
-        this.worldMap.followCamera(this.player);
-        // ===== 仮キャラクター処理ここまで =====
-
         console.log("マップ生成完了");
         console.log("スポーン地点:", spawn);
     }
+
 
     update(time, delta) {
         this.timeManager.update(delta);
@@ -102,3 +82,4 @@ export default class PlanetScene extends Phaser.Scene {
         // ===== 仮キャラクター移動処理ここまで =====
     }
 }
+
