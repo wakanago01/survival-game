@@ -4,7 +4,7 @@ import TimeManager from "../world/time.js";
 import TimeClock from "../ui/timeClock.js";
 import { GAME_SETTINGS } from "../data/settings.js";
 
-// ★ 先ほど作ったプレイヤー本体クラスをインポート
+// 先ほど作ったプレイヤー本体クラスをインポート
 import Player from "../player/player.js";
 
 export default class PlanetScene extends Phaser.Scene {
@@ -18,7 +18,7 @@ export default class PlanetScene extends Phaser.Scene {
         this.load.image(GAME_SETTINGS.map.dayKey, GAME_SETTINGS.map.dayPath);
         this.load.image(GAME_SETTINGS.map.nightKey, GAME_SETTINGS.map.nightPath);
 
-        // ★ キャラクター用アニメーション画像のロード
+        // キャラクター用アニメーション画像のロード
         const basePath = 'assets/images/charactors/';
         
         // 下向き
@@ -61,12 +61,20 @@ export default class PlanetScene extends Phaser.Scene {
         // ④ スポーン地点を取得
         const spawn = this.worldMap.getSpawnPoint();
 
-        // ★ ⑤ 本物のプレイヤーを生成して配置
-        // スポーン地点（spawn.x, spawn.y）にプレイヤーを配置します
+        // ⑤ 本物のプレイヤーを生成して配置
         this.player = new Player(this, spawn.x, spawn.y);
 
-        // ★ ⑥ キーボード入力を取得する用のcursorsを作成
+        // ⑥ キーボード入力を取得する用のcursorsを作成
         this.cursors = this.input.keyboard.createCursorKeys();
+
+        // ★★★ 【新規追加】カメラの追従設定 ★★★
+        // startFollow(ターゲット, 丸め処理の有無, 横の追従遅延, 縦の追従遅延)
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+        // (オプション) もしカメラがマップの外側の黒い空間を映したくない場合、
+        // 以下のようにマップのサイズに合わせて境界を設定できます。
+        // ※ this.worldMap.width や、GAME_SETTINGSの中にマップサイズがあれば設定してみてください。
+        // this.cameras.main.setBounds(0, 0, マップの横幅, マップの縦幅);
 
         console.log("マップ生成完了");
         console.log("スポーン地点:", spawn);
@@ -76,14 +84,9 @@ export default class PlanetScene extends Phaser.Scene {
         this.timeManager.update(delta);
         this.timeClock.update();
 
-        // ★ ⑦ プレイヤーの更新処理（移動＆アニメーション）を呼び出す
+        // ⑦ プレイヤーの更新処理（移動＆アニメーション）を呼び出す
         if (this.player) {
-            // 本物の移動処理 (movement.js) を内部で呼び出します
             this.player.update(this.cursors);
-
-            // 【当たり判定連動】
-            // 移動後にもし障害物にぶつかっていたら、CollisionManager を使って進めないようにする
-            // ※CollisionManagerの仕様に合わせて、必要なら player.x や y を押し戻す処理を挟んでください
         }
     }
 }
