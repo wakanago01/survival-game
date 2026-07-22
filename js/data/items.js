@@ -12,7 +12,7 @@ export const ITEM_CATEGORY = Object.freeze({
     CONSUMABLE: 'consumable', // 消費アイテム（食べ物、HP回復薬など）
     TOOL: 'tool',             // 道具（懐中電灯、ツルハシ、釣り竿など）
     SEED: 'seed',             // 農業用の種
-    EQUIPMENT: 'equipment',   // 戦闘用装備
+    EQUIPMENT: 'equipment',   // 戦闘用装備（武器・防具）
     QUEST: 'quest',           // ロケット部品など重要アイテム
 });
 
@@ -48,7 +48,7 @@ const ITEM_MASTER = Object.freeze({
         }
     },
 
-    // --- 追加された画像アセットに基づくアイテムデータ ---
+    // --- 素材・収集アイテム ---
     'koseki_lightblue': {
         id: 'koseki_lightblue',
         name: '水色の鉱石',
@@ -89,16 +89,63 @@ const ITEM_MASTER = Object.freeze({
         maxStack: 99,
         price: 30,
     },
+    'jewelry_round': {
+        id: 'jewelry_round',
+        name: '丸い宝石',
+        description: '輝く球体の宝石。非常に高値で売却できる。',
+        imagePath: 'assets/images/items/jewelry_round.png',
+        category: ITEM_CATEGORY.MATERIAL,
+        stackable: true,
+        maxStack: 99,
+        price: 300,
+    },
+
+    // --- 道具・ライト ---
     'kaichudento_red': {
         id: 'kaichudento_red',
         name: '赤い懐中電灯',
         description: '暗い夜や洞窟を照らすための探索用ライト。',
         imagePath: 'assets/images/items/kaichudento_01_red.png',
         category: ITEM_CATEGORY.TOOL,
-        stackable: false, // 道具類はスタック不可
+        stackable: false,
         maxStack: 1,
         price: 150,
         toolType: 'light',
+    },
+
+    // --- 武器・防具（将来の戦闘用拡張） ---
+    'tsurugi_bronze': {
+        id: 'tsurugi_bronze',
+        name: 'ブロンズソード',
+        description: '青銅で作られた剣。近接攻撃ができる。',
+        imagePath: 'assets/images/items/tsurugi_bronze.png',
+        category: ITEM_CATEGORY.EQUIPMENT,
+        stackable: false,
+        maxStack: 1,
+        price: 200,
+        stats: { attack: 15 } // 攻撃力パラメータ
+    },
+    'shield_kiteshield': {
+        id: 'shield_kiteshield',
+        name: 'カイトシールド',
+        description: '敵の攻撃を防ぐ頑丈な大きな盾。',
+        imagePath: 'assets/images/items/shield_kiteshield.png',
+        category: ITEM_CATEGORY.EQUIPMENT,
+        stackable: false,
+        maxStack: 1,
+        price: 180,
+        stats: { defense: 10 } // 防御力パラメータ
+    },
+    'yumi': {
+        id: 'yumi',
+        name: '木の弓',
+        description: '遠くの敵を攻撃できる弓。',
+        imagePath: 'assets/images/items/yumi.png',
+        category: ITEM_CATEGORY.EQUIPMENT,
+        stackable: false,
+        maxStack: 1,
+        price: 220,
+        stats: { attack: 12, range: 5 } // 攻撃力・射程パラメータ
     }
 });
 
